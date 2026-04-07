@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>普法情景游戏 v1.4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #game-container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* 图片显示区域 */
+        #visual-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #2c3e50;
+            overflow: hidden;
+        }
+
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s ease;
+        }
+
+        #background.darken {
+            opacity: 0.5;
+        }
+
+        #background.brighten {
+            filter: brightness(1.3);
+        }
+
+        #background.grayscale {
+            filter: grayscale(100%);
+        }
+
+        #background.blur {
+            filter: blur(5px);
+        }
+
+        /* 角色层 */
+        .character-layer {
+            position: absolute;
+            bottom: 0;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .character-layer img {
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        #char-left {
+            left: 30%;
+        }
+
+        #char-center {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #char-right {
+            right: 30%;
+        }
+
+        /* 特效 */
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .flash {
+            animation: flash 0.3s;
+        }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* 文本显示区域 */
+        #text-area {
+            padding: 30px;
+            min-height: 250px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-top: 3px solid #e0e0e0;
+            transition: border-color 0.3s ease;
+        }
+
+        /* 情绪边框颜色 */
+        #text-area.mood-calm {
+            border-top-color: #3498db;
+        }
+
+        #text-area.mood-safe {
+            border-top-color: #2ecc71;
+        }
+
+        #text-area.mood-tense {
+            border-top-color: #f39c12;
+        }
+
+        #text-area.mood-danger {
+            border-top-color: #e74c3c;
+        }
+
+        #text-area.mood-sad {
+            border-top-color: #95a5a6;
+        }
+
+        #text-area.mood-happy {
+            border-top-color: #1abc9c;
+        }
+
+        #text-area.mood-hopeful {
+            border-top-color: #9b59b6;
+        }
+
+        #story-content {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #story-content p {
+            margin-bottom: 15px;
+        }
+
+        /* 选项按钮 */
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .choice-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .choice-button:active {
+            transform: translateY(0);
+        }
+
+        /* 加载提示 */
+        #loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* 游戏结束 */
+        .game-end {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .game-end h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        /* 滚动条样式 */
+        #text-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #text-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #text-area::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        #text-area::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 可折叠提示框 */
+        .collapsible-hint {
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            border: 2px solid #e0e0e0;
+        }
+
+        .hint-header {
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .hint-header:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+        }
+
+        .hint-header.tip-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .hint-header.legal-header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        .hint-header.recap-header {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+
+        .hint-icon {
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .hint-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .hint-content {
+            padding: 15px;
+            background: #f9f9f9;
+            display: none;
+            line-height: 1.8;
+        }
+
+        .hint-content.show {
+            display: block;
+        }
+
+        .hint-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .hint-content li {
+            margin: 5px 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            #visual-area {
+                height: 300px;
+            }
+
+            #text-area {
+                padding: 20px;
+            }
+
+            #story-content {
+                font-size: 16px;
+            }
+
+            .choice-button {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- 视觉区域（背景+角色） -->
+        <div id="visual-area">
+            <img id="background" src="" alt="背景" style="display: none;">
+            <div id="char-left" class="character-layer" style="display: none;">
+                <img src="" alt="左侧角色">
+            </div>
+            <div id="char-center" class="character-layer" style="display: none;">
+                <img src="" alt="中央角色">
+            </div>
+            <div id="char-right" class="character-layer" style="display: none;">
+                <img src="" alt="右侧角色">
+            </div>
+        </div>
+
+        <!-- 文本区域 -->
+        <div id="text-area">
+            <div id="loading">正在加载游戏...</div>
+            <div id="story-content" style="display: none;"></div>
+            <div id="choices"></div>
+        </div>
+    </div>
+
+    <!-- Ink Runtime -->
+    <script src="ink.js"></script>
+
+    <!-- 游戏逻辑 -->
+    <script>
+        let story;
+
+        // 初始化游戏
+        function initGame() {
+            // 加载Ink故事JSON文件
+            fetch('story.json')
+                .then(response => response.json())
+                .then(storyContent => {
+                    story = new inkjs.Story(storyContent);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('story-content').style.display = 'block';
+                    continueStory();
+                })
+                .catch(error => {
+                    document.getElementById('loading').innerHTML =
+                        '加载失败！请确保story.json文件存在。<br><br>错误信息: ' + error;
+                });
+        }
+
+        // 继续故事
+        function continueStory() {
+            let paragraphText = '';
+
+            // 继续获取文本直到有选项或结束
+            while (story.canContinue) {
+                let text = story.Continue();
+                paragraphText += text;
+
+                // 处理tags
+                if (story.currentTags.length > 0) {
+                    processTags(story.currentTags);
+                }
+            }
+
+            // 显示文本
+            if (paragraphText.trim()) {
+                displayText(paragraphText);
+            }
+
+            // 显示选项
+            if (story.currentChoices.length > 0) {
+                displayChoices(story.currentChoices);
+            } else {
+                // 游戏结束
+                displayGameEnd();
+            }
+        }
+
+        // 处理Tags
+        function processTags(tags) {
+            tags.forEach(tag => {
+                const parts = tag.split(':').map(s => s.trim());
+                if (parts.length !== 2) return;
+
+                const tagName = parts[0];
+                const tagValue = parts[1];
+
+                switch (tagName) {
+                    case 'bg':
+                        updateBackground(tagValue);
+                        break;
+                    case 'char_left':
+                        updateCharacter('left', tagValue);
+                        break;
+                    case 'char_right':
+                        updateCharacter('right', tagValue);
+                        break;
+                    case 'char_center':
+                        updateCharacter('center', tagValue);
+                        break;
+                    case 'mood':
+                        updateMood(tagValue);
+                        break;
+                    case 'effect':
+                        triggerEffect(tagValue);
+                        break;
+                    case 'bg_filter':
+                        applyBackgroundFilter(tagValue);
+                        break;
+                }
+            });
+        }
+
+        // 更新背景
+        function updateBackground(filename) {
+            const bg = document.getElementById('background');
+
+            if (filename === 'none') {
+                bg.style.display = 'none';
+            } else {
+                // Add cache-busting timestamp
+                const timestamp = new Date().getTime();
+                bg.src = 'graphics/background/' + filename + '?v=' + timestamp;
+                bg.style.display = 'block';
+                bg.classList.add('fade-in');
+                setTimeout(() => bg.classList.remove('fade-in'), 1000);
+            }
+        }
+
+        // 更新角色
+        function updateCharacter(position, filename) {
+            const container = document.getElementById('char-' + position);
+            const img = container.querySelector('img');
+
+            if (filename === 'none') {
+                container.style.display = 'none';
+            } else {
+                // Add cache-busting timestamp
+                const timestamp = new Date().getTime();
+                img.src = 'graphics/characters/' + filename + '?v=' + timestamp;
+                container.style.display = 'flex';
+                container.classList.add('fade-in');
+                setTimeout(() => container.classList.remove('fade-in'), 300);
+            }
+        }
+
+        // 更新情绪氛围
+        function updateMood(mood) {
+            const textArea = document.getElementById('text-area');
+
+            // 移除所有mood类
+            textArea.className = textArea.className.replace(/mood-\w+/g, '');
+
+            // 添加新mood类
+            if (mood && mood !== 'none') {
+                textArea.classList.add('mood-' + mood);
+            }
+        }
+
+        // 触发特效
+        function triggerEffect(effect) {
+            const visualArea = document.getElementById('visual-area');
+
+            switch (effect) {
+                case 'shake':
+                    visualArea.classList.add('shake');
+                    setTimeout(() => visualArea.classList.remove('shake'), 500);
+                    break;
+                case 'flash':
+                    visualArea.classList.add('flash');
+                    setTimeout(() => visualArea.classList.remove('flash'), 300);
+                    break;
+                case 'fade':
+                    const bg = document.getElementById('background');
+                    bg.classList.add('fade-in');
+                    setTimeout(() => bg.classList.remove('fade-in'), 1000);
+                    break;
+            }
+        }
+
+        // 应用背景滤镜
+        function applyBackgroundFilter(filter) {
+            const bg = document.getElementById('background');
+
+            // 移除所有滤镜类
+            bg.classList.remove('darken', 'brighten', 'grayscale', 'blur');
+
+            // 应用新滤镜
+            if (filter && filter !== 'none') {
+                bg.classList.add(filter);
+            }
+        }
+
+        // 显示文本
+        function displayText(text) {
+            const content = document.getElementById('story-content');
+
+            // 将文本转换为HTML段落，处理提示框
+            const paragraphs = text.split('\n').filter(p => p.trim());
+            let html = '';
+            let inHint = false;           // 是否在提示块中
+            let hintHasSeparator = false; // 提示块是否有分隔线
+            let hintType = '';
+            let hintContent = '';
+            let sawOpeningSeparator = false;
+
+            paragraphs.forEach((p, index) => {
+                const trimmedP = p.trim();
+
+                // 检测分隔线
+                if (trimmedP.startsWith('════')) {
+                    if (inHint && hintHasSeparator && hintContent) {
+                        // 这是结束分隔线，输出提示
+                        html += createCollapsibleHint(hintType, hintContent);
+                        inHint = false;
+                        hintHasSeparator = false;
+                        hintContent = '';
+                        hintType = '';
+                    } else {
+                        // 这是开始分隔线
+                        sawOpeningSeparator = true;
+                    }
+                    return;
+                }
+
+                // 检测 💡 开头的提示
+                if (trimmedP.startsWith('💡')) {
+                    // 如果之前有未输出的提示，先输出
+                    if (inHint && hintContent) {
+                        html += createCollapsibleHint(hintType, hintContent);
+                    }
+
+                    let hintText = trimmedP.replace('💡', '').trim();
+                    hintText = hintText.replace(/^提示[：:]?\s*/, '').trim();
+
+                    inHint = true;
+                    hintType = 'tip';
+                    hintHasSeparator = sawOpeningSeparator;
+                    hintContent = hintText ? `<p>${hintText}</p>` : '';
+                    sawOpeningSeparator = false;
+                    return;
+                }
+
+                // 检测 📖 法律小课堂
+                if (trimmedP.includes('📖 法律小课堂')) {
+                    // 如果之前有未输出的提示，先输出
+                    if (inHint && hintContent) {
+                        html += createCollapsibleHint(hintType, hintContent);
+                    }
+
+                    const hintText = trimmedP.replace('📖 法律小课堂', '').replace(/[：:]\s*/, '').trim();
+
+                    inHint = true;
+                    hintType = 'legal';
+                    hintHasSeparator = sawOpeningSeparator;
+                    hintContent = hintText ? `<p>${hintText}</p>` : '';
+                    sawOpeningSeparator = false;
+                    return;
+                }
+
+                // 检测 【结局复盘】 - 现在作为普通文本处理，不做折叠
+                if (trimmedP.includes('【结局复盘】')) {
+                    // 如果之前有未输出的提示，先输出
+                    if (inHint && hintContent) {
+                        html += createCollapsibleHint(hintType, hintContent);
+                        inHint = false;
+                        hintContent = '';
+                    }
+                    // 作为标题输出
+                    html += `<h3 style="color: #FF9800; margin-top: 20px;">📋 ${trimmedP}</h3>`;
+                    sawOpeningSeparator = false;
+                    return;
+                }
+
+                // 检测 🌟法律知识复习 - 作为普通文本处理
+                if (trimmedP.includes('🌟法律知识复习')) {
+                    // 如果之前有未输出的提示，先输出
+                    if (inHint && hintContent) {
+                        html += createCollapsibleHint(hintType, hintContent);
+                        inHint = false;
+                        hintContent = '';
+                    }
+                    // 作为标题输出
+                    html += `<h3 style="color: #2196F3; margin-top: 20px;">${trimmedP}</h3>`;
+                    sawOpeningSeparator = false;
+                    return;
+                }
+
+                // 重置分隔线标记
+                sawOpeningSeparator = false;
+
+                // 如果在提示块内
+                if (inHint) {
+                    // 检查是否是bullet point或继续内容
+                    if (trimmedP.startsWith('•') || trimmedP.startsWith('✓') || trimmedP.startsWith('(')) {
+                        // 是bullet point，继续累积
+                        hintContent += `<p>${trimmedP}</p>`;
+                    } else if (!hintHasSeparator) {
+                        // 无分隔线的提示，检查后面是否还有bullet points
+                        // 如果下一行是bullet point，继续收集当前行
+                        const nextLines = paragraphs.slice(index + 1);
+                        const hasMoreBullets = nextLines.some((line, i) => {
+                            const l = line.trim();
+                            // 找到第一个非空行
+                            if (l.startsWith('•') || l.startsWith('✓')) return true;
+                            // 如果遇到新的特殊标记，停止检查
+                            if (l.startsWith('💡') || l.includes('📖') || l.startsWith('════')) return false;
+                            return null; // 继续检查
+                        });
+
+                        if (hasMoreBullets) {
+                            // 后面还有bullet points，继续收集
+                            hintContent += `<p>${trimmedP}</p>`;
+                        } else {
+                            // 后面没有bullet points了，输出提示并处理当前行
+                            html += createCollapsibleHint(hintType, hintContent);
+                            inHint = false;
+                            hintContent = '';
+                            html += `<p>${trimmedP}</p>`;
+                        }
+                    } else {
+                        // 有分隔线的提示，继续累积直到遇到结束分隔线
+                        hintContent += `<p>${trimmedP}</p>`;
+                    }
+                } else {
+                    // 正常段落
+                    html += `<p>${trimmedP}</p>`;
+                }
+            });
+
+            // 如果还有未闭合的提示
+            if (inHint && hintContent) {
+                html += createCollapsibleHint(hintType, hintContent);
+            }
+
+            content.innerHTML = html;
+
+            // 添加提示框点击事件
+            document.querySelectorAll('.hint-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('.hint-icon');
+                    content.classList.toggle('show');
+                    icon.classList.toggle('expanded');
+                });
+            });
+
+            // 滚动到顶部
+            document.getElementById('text-area').scrollTop = 0;
+        }
+
+        // 创建可折叠提示框
+        function createCollapsibleHint(type, content) {
+            let typeClass, icon, headerText;
+
+            switch (type) {
+                case 'legal':
+                    typeClass = 'legal-header';
+                    icon = '📖';
+                    headerText = '法律小课堂';
+                    break;
+                case 'recap':
+                    typeClass = 'recap-header';
+                    icon = '📋';
+                    headerText = '结局复盘';
+                    break;
+                default: // 'tip'
+                    typeClass = 'tip-header';
+                    icon = '💡';
+                    headerText = '提示';
+            }
+
+            return `
+                <div class="collapsible-hint">
+                    <div class="hint-header ${typeClass}">
+                        <span>${icon} ${headerText}</span>
+                        <span class="hint-icon">▼</span>
+                    </div>
+                    <div class="hint-content">
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 显示选项
+        function displayChoices(choices) {
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+
+            choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = choice.text;
+                button.onclick = () => {
+                    story.ChooseChoiceIndex(index);
+                    continueStory();
+                };
+                choicesContainer.appendChild(button);
+            });
+        }
+
+        // 显示游戏结束
+        function displayGameEnd() {
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = `
+                <div class="game-end">
+                    <h2>游戏结束</h2>
+                    <p>感谢你玩这个游戏。</p>
+                    <button class="choice-button" onclick="location.reload()">重新开始</button>
+                </div>
+            `;
+        }
+
+        // 页面加载时初始化游戏
+        window.onload = initGame;
+    </script>
+</body>
+</html>

@@ -36,3 +36,6 @@ Temporary Items
 
 # Claude internal
 .claude/
+
+# Archive folder
+archive/
