@@ -494,6 +494,22 @@
             }
         }
 
+        /* Markdown 内容样式 */
+        .ai-msg.assistant p { margin: 0 0 8px; }
+        .ai-msg.assistant p:last-child { margin-bottom: 0; }
+        .ai-msg.assistant ul, .ai-msg.assistant ol { margin: 4px 0 8px; padding-left: 18px; }
+        .ai-msg.assistant li { margin: 2px 0; }
+        .ai-msg.assistant strong { font-weight: 600; }
+        .ai-msg.assistant h1, .ai-msg.assistant h2, .ai-msg.assistant h3 {
+            font-size: 15px; font-weight: 600; margin: 8px 0 4px;
+        }
+        .ai-msg.assistant code {
+            background: #f0f0f8; padding: 1px 5px; border-radius: 3px; font-size: 13px;
+        }
+        .ai-msg.assistant blockquote {
+            border-left: 3px solid #ccc; margin: 6px 0; padding-left: 10px; color: #666;
+        }
+
         #ai-messages::-webkit-scrollbar {
             width: 6px;
         }
@@ -553,6 +569,8 @@
 
     <!-- Ink Runtime -->
     <script src="ink.js"></script>
+    <!-- Markdown 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <!-- 游戏逻辑 -->
     <script>
@@ -1115,9 +1133,14 @@
                             const json = JSON.parse(data);
                             const delta = json.choices?.[0]?.delta?.content || "";
                             fullText += delta;
-                            typingEl.textContent = fullText;
+                            if (typeof marked !== 'undefined') {
+                                typingEl.innerHTML = marked.parse(fullText);
+                            } else {
+                                typingEl.textContent = fullText;
+                            }
                             const msgs = document.getElementById('ai-messages');
-                            msgs.scrollTop = msgs.scrollHeight;
+                            const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 60;
+                            if (atBottom) msgs.scrollTop = msgs.scrollHeight;
                         } catch(e) {}
                     }
                 }
@@ -1140,9 +1163,15 @@
             const msgs = document.getElementById('ai-messages');
             const el = document.createElement('div');
             el.className = `ai-msg ${role}`;
-            el.textContent = text;
+            if (role === 'assistant' && typeof marked !== 'undefined') {
+                el.innerHTML = marked.parse(text);
+            } else {
+                el.textContent = text;
+            }
             msgs.appendChild(el);
-            msgs.scrollTop = msgs.scrollHeight;
+            // 只有用户已在底部时才自动滚动
+            const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 60;
+            if (atBottom) msgs.scrollTop = msgs.scrollHeight;
             return el;
         }
 
