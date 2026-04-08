@@ -326,9 +326,188 @@
                 padding: 12px 20px;
             }
         }
+
+        /* ===== 双栏布局 ===== */
+        body {
+            align-items: flex-start;
+        }
+
+        #page-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1260px;
+            margin: 0 auto;
+        }
+
+        #game-container {
+            flex-shrink: 0;
+        }
+
+        /* ===== AI侧边栏 ===== */
+        #ai-sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            height: 800px;
+            overflow: hidden;
+            position: sticky;
+            top: 20px;
+        }
+
+        #ai-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        #ai-avatar {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        #ai-title-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ai-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #ai-subtitle {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        #ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #f8f8fc;
+        }
+
+        .ai-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.7;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .ai-msg.assistant {
+            background: white;
+            border: 1px solid #e8e8f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-msg.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-msg.typing {
+            background: white;
+            border: 1px solid #e8e8f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            color: #999;
+            font-style: italic;
+        }
+
+        #ai-input-area {
+            padding: 12px;
+            border-top: 1px solid #e8e8f0;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        #ai-input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #ai-input:focus {
+            border-color: #667eea;
+        }
+
+        #ai-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        #ai-send:hover {
+            opacity: 0.85;
+        }
+
+        #ai-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 1100px) {
+            #page-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #ai-sidebar {
+                width: 100%;
+                max-width: 900px;
+                height: 400px;
+                position: static;
+            }
+        }
+
+        #ai-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        #ai-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #ai-messages::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
+    <div id="page-wrapper">
     <div id="game-container">
         <!-- 视觉区域（背景+角色） -->
         <div id="visual-area">
@@ -352,11 +531,76 @@
         </div>
     </div>
 
+    </div><!-- /#game-container -->
+
+        <!-- 右栏：AI助手侧边栏 -->
+        <div id="ai-sidebar">
+            <div id="ai-header">
+                <span id="ai-avatar">✨</span>
+                <div id="ai-title-group">
+                    <span id="ai-name">灵灵</span>
+                    <span id="ai-subtitle">你的守护精灵</span>
+                </div>
+            </div>
+            <div id="ai-messages"></div>
+            <div id="ai-input-area">
+                <textarea id="ai-input" placeholder="问灵灵任何问题..." rows="2"></textarea>
+                <button id="ai-send">发送</button>
+            </div>
+        </div>
+
+    </div><!-- /#page-wrapper -->
+
     <!-- Ink Runtime -->
     <script src="ink.js"></script>
 
     <!-- 游戏逻辑 -->
     <script>
+        // ============================================================
+        // AI 小助手配置（如需修改角色设定，在此处编辑）
+        // ============================================================
+        const AI_CONFIG = {
+            // 助手名字（显示在侧边栏顶部）
+            name: "灵灵",
+
+            // 头像（emoji 或图片路径，如 "graphics/characters/灵灵.png"）
+            avatar: "✨",
+
+            // 副标题
+            subtitle: "你的守护精灵",
+
+            // 硅基流动 API
+            apiBase: "https://api.siliconflow.cn/v1",
+            apiKey: "sk-dzzhzvawwfvnxsgvlgqobshghylhptadvszbdqzhcolcynrz",
+            model: "Qwen/Qwen3.5-397B-A17B",
+
+            // 角色系统提示词（修改此处调整助手的说话风格和人格）
+            systemPromptBase: `你是"灵灵"，一个温暖、善良的守护精灵，专门陪伴小朋友学习法律知识和自我保护。
+
+你的说话风格：
+- 用简单、友善的语气，像一个温暖的大姐姐或大哥哥
+- 解释法律时用小朋友能理解的方式，避免太多法律术语
+- 遇到敏感话题时，先给予情感支持，再给出实际建议
+- 鼓励小朋友勇于求助，告诉可信任的大人
+
+当引用法律条文时：
+- 必须准确标注法律名称和条款编号
+- 在回答末尾用"法律依据："列出引用来源
+- 只引用提供给你的条文原文，不要编造条款`
+        };
+
+        // ============================================================
+        // 游戏状态（由游戏逻辑自动更新，AI 问答时自动注入上下文）
+        // ============================================================
+        const gameState = {
+            currentBg: "",        // 当前背景场景
+            currentMood: "",      // 当前情绪氛围
+            harmValue: null,      // Harm 变量值
+            supportValue: null,   // Support 变量值
+            recentText: [],       // 最近3段故事文本（滚动更新）
+            lastChoice: ""        // 玩家最后一次做出的选择
+        };
+
         let story;
 
         // 初始化游戏
@@ -390,6 +634,17 @@
                     processTags(story.currentTags);
                 }
             }
+
+            // 更新游戏状态供AI使用
+            if (paragraphText.trim()) {
+                gameState.recentText.push(paragraphText.trim().slice(0, 200));
+                if (gameState.recentText.length > 3) gameState.recentText.shift();
+            }
+            // 尝试读取 Ink 变量
+            try {
+                gameState.harmValue = story.variablesState["Harm"];
+                gameState.supportValue = story.variablesState["Support"];
+            } catch(e) {}
 
             // 显示文本
             if (paragraphText.trim()) {
@@ -447,7 +702,7 @@
             if (filename === 'none') {
                 bg.style.display = 'none';
             } else {
-                // Add cache-busting timestamp
+                gameState.currentBg = filename;
                 const timestamp = new Date().getTime();
                 bg.src = 'graphics/background/' + filename + '?v=' + timestamp;
                 bg.style.display = 'block';
@@ -482,6 +737,7 @@
 
             // 添加新mood类
             if (mood && mood !== 'none') {
+                gameState.currentMood = mood;
                 textArea.classList.add('mood-' + mood);
             }
         }
@@ -722,6 +978,7 @@
                 button.className = 'choice-button';
                 button.textContent = choice.text;
                 button.onclick = () => {
+                    gameState.lastChoice = choice.text;
                     story.ChooseChoiceIndex(index);
                     continueStory();
                 };
@@ -741,8 +998,185 @@
             `;
         }
 
+        // ===== 法律知识库 =====
+        let legalKnowledge = [];
+
+        async function loadLegalKnowledge() {
+            try {
+                const res = await fetch('legal_knowledge.json');
+                legalKnowledge = await res.json();
+            } catch (e) {
+                console.warn("法律知识库加载失败:", e);
+            }
+        }
+
+        function searchLegalKnowledge(query) {
+            if (!legalKnowledge.length) return [];
+            const q = query.toLowerCase();
+            const scored = legalKnowledge.map(item => {
+                let score = 0;
+                item.keywords.forEach(kw => {
+                    if (q.includes(kw)) score += 2;
+                });
+                if (q.includes(item.law)) score += 3;
+                const words = q.split(/[\s，。？！、]/);
+                words.forEach(w => {
+                    if (w.length > 1 && item.content.includes(w)) score += 1;
+                });
+                return { item, score };
+            });
+            return scored
+                .filter(s => s.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 3)
+                .map(s => s.item);
+        }
+
+        // ===== AI 聊天 =====
+        const chatHistory = [];
+
+        function buildSystemPrompt(userQuery) {
+            const relatedLaws = searchLegalKnowledge(userQuery);
+            let lawContext = "";
+            if (relatedLaws.length > 0) {
+                lawContext = "\n\n【相关法律条文参考（请在回答中准确引用）】\n";
+                relatedLaws.forEach(law => {
+                    lawContext += `\n${law.law} ${law.article}：\n"${law.content}"\n`;
+                });
+            }
+
+            let stateContext = "\n\n【当前游戏状态（帮助你理解玩家的处境）】\n";
+            if (gameState.currentBg) stateContext += `- 当前场景：${gameState.currentBg}\n`;
+            if (gameState.currentMood) stateContext += `- 当前氛围：${gameState.currentMood}\n`;
+            if (gameState.harmValue !== null) stateContext += `- 伤害值(Harm)：${gameState.harmValue}\n`;
+            if (gameState.supportValue !== null) stateContext += `- 支持值(Support)：${gameState.supportValue}\n`;
+            if (gameState.lastChoice) stateContext += `- 玩家最近选择：${gameState.lastChoice}\n`;
+            if (gameState.recentText.length > 0) {
+                stateContext += `- 最近剧情片段：\n"${gameState.recentText.join('\n...\n')}"\n`;
+            }
+
+            return AI_CONFIG.systemPromptBase + lawContext + stateContext;
+        }
+
+        async function sendToAI(userMessage) {
+            const sendBtn = document.getElementById('ai-send');
+            const input = document.getElementById('ai-input');
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            appendMessage('user', userMessage);
+            const typingEl = appendMessage('typing', '灵灵正在思考...');
+
+            const messages = [
+                { role: "system", content: buildSystemPrompt(userMessage) },
+                ...chatHistory,
+                { role: "user", content: userMessage }
+            ];
+
+            try {
+                const res = await fetch(`${AI_CONFIG.apiBase}/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AI_CONFIG.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: AI_CONFIG.model,
+                        messages,
+                        stream: true,
+                        max_tokens: 800,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`API 错误: ${res.status}`);
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                typingEl.className = 'ai-msg assistant';
+                typingEl.textContent = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+                    for (const line of lines) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') break;
+                        try {
+                            const json = JSON.parse(data);
+                            const delta = json.choices?.[0]?.delta?.content || "";
+                            fullText += delta;
+                            typingEl.textContent = fullText;
+                            const msgs = document.getElementById('ai-messages');
+                            msgs.scrollTop = msgs.scrollHeight;
+                        } catch(e) {}
+                    }
+                }
+
+                chatHistory.push({ role: "user", content: userMessage });
+                chatHistory.push({ role: "assistant", content: fullText });
+                if (chatHistory.length > 20) chatHistory.splice(0, 2);
+
+            } catch (err) {
+                typingEl.className = 'ai-msg assistant';
+                typingEl.textContent = `出错了：${err.message}。请检查网络连接或稍后再试。`;
+            }
+
+            sendBtn.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function appendMessage(role, text) {
+            const msgs = document.getElementById('ai-messages');
+            const el = document.createElement('div');
+            el.className = `ai-msg ${role}`;
+            el.textContent = text;
+            msgs.appendChild(el);
+            msgs.scrollTop = msgs.scrollHeight;
+            return el;
+        }
+
+        function initAISidebar() {
+            document.getElementById('ai-avatar').textContent = AI_CONFIG.avatar;
+            document.getElementById('ai-name').textContent = AI_CONFIG.name;
+            document.getElementById('ai-subtitle').textContent = AI_CONFIG.subtitle;
+
+            appendMessage('assistant',
+                `你好！我是${AI_CONFIG.name}，你的守护精灵 ✨\n\n在游戏过程中，你可以随时问我任何问题——关于法律、安全，或者刚才的故事情节。我会尽力帮助你！`
+            );
+
+            document.getElementById('ai-send').addEventListener('click', handleSend);
+            document.getElementById('ai-input').addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            });
+        }
+
+        function handleSend() {
+            const input = document.getElementById('ai-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = "";
+            sendToAI(text);
+        }
+
         // 页面加载时初始化游戏
-        window.onload = initGame;
+        window.onload = async function() {
+            await loadLegalKnowledge();
+            initAISidebar();
+            initGame();
+        };
     </script>
 </body>
 </html>
