@@ -66,8 +66,9 @@ Open `普法情景游戏_v1.4_with_tags.ink` in [Inky](https://github.com/inkle/
 ```
 
 ### Game Variables
-- `Harm`: Tracks harm sustained by player
-- `Support`: Tracks support received from trusted adults
+- `silence_count`: Tracks player's silent/passive responses
+- `current_act`: Current story act (1-4)
+- `assault_occurred`: Boolean flag for ending determination
 
 ### Ending Types
 | Ending | Description |

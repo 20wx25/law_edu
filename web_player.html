@@ -613,8 +613,9 @@
         const gameState = {
             currentBg: "",        // 当前背景场景
             currentMood: "",      // 当前情绪氛围
-            harmValue: null,      // Harm 变量值
-            supportValue: null,   // Support 变量值
+            silenceCount: null,      // 沉默次数
+            currentAct: null,        // 当前幕数
+            assaultOccurred: null,   // 是否发生侵害
             recentText: [],       // 最近3段故事文本（滚动更新）
             lastChoice: ""        // 玩家最后一次做出的选择
         };
@@ -660,8 +661,9 @@
             }
             // 尝试读取 Ink 变量
             try {
-                gameState.harmValue = story.variablesState["Harm"];
-                gameState.supportValue = story.variablesState["Support"];
+                gameState.silenceCount = story.variablesState["silence_count"];
+                gameState.currentAct = story.variablesState["current_act"];
+                gameState.assaultOccurred = story.variablesState["assault_occurred"];
             } catch(e) {}
 
             // 显示文本
@@ -1066,8 +1068,9 @@
             let stateContext = "\n\n【当前游戏状态（帮助你理解玩家的处境）】\n";
             if (gameState.currentBg) stateContext += `- 当前场景：${gameState.currentBg}\n`;
             if (gameState.currentMood) stateContext += `- 当前氛围：${gameState.currentMood}\n`;
-            if (gameState.harmValue !== null) stateContext += `- 伤害值(Harm)：${gameState.harmValue}\n`;
-            if (gameState.supportValue !== null) stateContext += `- 支持值(Support)：${gameState.supportValue}\n`;
+            if (gameState.currentAct !== null) stateContext += `- 当前幕数：第${gameState.currentAct}幕\n`;
+            if (gameState.silenceCount !== null) stateContext += `- 沉默次数：${gameState.silenceCount}\n`;
+            if (gameState.assaultOccurred !== null) stateContext += `- 是否发生侵害：${gameState.assaultOccurred ? '是' : '否'}\n`;
             if (gameState.lastChoice) stateContext += `- 玩家最近选择：${gameState.lastChoice}\n`;
             if (gameState.recentText.length > 0) {
                 stateContext += `- 最近剧情片段：\n"${gameState.recentText.join('\n...\n')}"\n`;
