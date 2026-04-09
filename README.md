@@ -6,113 +6,94 @@ An interactive fiction game built with [Ink](https://www.inklestudios.com/ink/) 
 
 ## Current Version
 
-**v1.4** - Latest stable version with complete graphics integration and web player
+**v1.4** - Complete graphics integration, web player, and AI guardian assistant
+
+## Features
+
+### Interactive Story
+- **Branching Narrative**: Multiple paths based on player choices
+- **Visual Novel Style**: Character sprites and background scenes
+- **Educational Content**: Legal knowledge sections, safety tips, and ending reviews
+
+### AI Guardian Assistant (灵灵)
+- **Real-time Chat**: Ask questions about safety, law, or the story
+- **Legal Knowledge RAG**: Retrieves relevant Chinese legal articles to provide accurate information
+- **Context-Aware**: Understands current game state and recent story events
+- **Child-Friendly**: Warm, supportive tone designed for young users
 
 ## Project Structure
 
 ```
-├── 普法情景游戏_v1.4_with_tags.ink  # Current story source (Ink script)
-├── story.json                        # Compiled story for web playback
-├── web_player.html                   # Web-based game player
-├── ink.js                            # Ink runtime (inkjs library)
+├── web_player.html                   # Web game + AI assistant
+├── story.json                        # Compiled Ink story
+├── ink.js                            # Ink runtime (inkjs)
+├── legal_knowledge.json              # Legal articles for AI RAG
+├── 普法情景游戏_v1.4_with_tags.ink   # Ink source script
+├── CHANGELOG.md                      # Version history
 ├── graphics/
 │   ├── background/                   # Scene backgrounds
-│   │   ├── 放学路_第一幕主背景.png
-│   │   ├── 堂屋.png
-│   │   ├── 里屋.png
-│   │   ├── 河边树林外.png
-│   │   └── 派出所.png
 │   └── characters/                   # Character sprites
-│       ├── 小雨平静版.png
-│       ├── 小雨害怕版1.png
-│       ├── 小雨害怕版2.png
-│       ├── 孙伯伯和蔼版.png
-│       ├── 孙伯伯阴沉版.png
-│       └── 女警.png
-├── versions/                         # Version history
-│   ├── VERSION_HISTORY.md
-│   ├── v1.0/
-│   ├── v1.1/
-│   ├── v1.2/
-│   └── v1.3/
-├── archive/                          # Archived documentation
-├── prd/                              # Product requirements
-└── INKY OFFICIAL DOCUMENTATION/      # Ink language reference
+├── 知识库/                           # Source legal documents
+└── archive/                          # Archived documentation
 ```
 
 ## How to Play
 
-### Option 1: Local HTTP Server (Recommended)
+### Local Server (Required)
 ```bash
 cd /path/to/inky
 python3 -m http.server 8080
 ```
-Then open http://localhost:8080/web_player.html in your browser.
+Open http://localhost:8080/web_player.html in your browser.
 
-### Option 2: Inky Editor
-Open `普法情景游戏_v1.4_with_tags.ink` in [Inky](https://github.com/inkle/inky/releases) editor.
-
-## Key Features
-
-- **Interactive Storytelling**: Multiple branching paths based on player choices
-- **Visual Novel Style**: Character sprites and background images
-- **Educational Content**:
-  - Legal knowledge sections (法律小课堂)
-  - Safety tips (提示) displayed as expandable buttons
-  - Ending reviews (结局复盘) with learning points
-- **Variable System**:
-  - `Risk` (hidden): Tracks danger level
-  - `Harm` (visible): Tracks harm sustained
-  - `Support` (visible): Tracks support received
-- **Four Ending Types**:
-  - A_best: Best outcome - timely help, minimal harm
-  - A2_assault_reported: Assault occurred but reported
-  - safe_ending_early: Escaped early
-  - D_severe: Worst outcome - severe harm
+### Inky Editor (Story editing only)
+Open `普法情景游戏_v1.4_with_tags.ink` in [Inky](https://github.com/inkle/inky/releases).
 
 ## Technical Details
 
-### Ink Tags System
-The game uses custom tags for visual presentation:
-- `# bg: <background_name>` - Set background image
-- `# char_left: <character>` - Character on left
-- `# char_center: <character>` - Character in center
-- `# char_right: <character>` - Character on right
-- `# mood: <mood>` - Set character mood/expression
+### AI Assistant Architecture
+- **Frontend**: Chat sidebar in `web_player.html`
+- **API Proxy**: Cloudflare Worker (keeps API key secure)
+- **Model**: Qwen/Qwen3.5-397B-A17B via SiliconFlow
+- **RAG**: Keyword-based retrieval from `legal_knowledge.json`
 
-### Compiling the Story
-If you modify the .ink file, recompile using inklecate:
-```bash
-/Applications/Inky.app/Contents/Resources/app.asar.unpacked/main-process/ink/inkjs-compatible/inklecate_mac -o story.json 普法情景游戏_v1.4_with_tags.ink
+### Ink Tags System
+```ink
+# bg: 放学路_第一幕主背景.png    // Set background
+# char_left: 小雨平静版.png      // Left character
+# char_center: 孙伯伯和蔼版.png  // Center character
+# mood: tense                    // Set mood (affects UI color)
 ```
 
-### Web Player Features
-- Collapsible hint boxes for educational content
-- Character and background display
-- Progress tracking with variable display
-- Responsive design
+### Game Variables
+- `Harm`: Tracks harm sustained by player
+- `Support`: Tracks support received from trusted adults
 
-## Documentation
-
-| File | Description |
-|------|-------------|
-| `CHANGELOG.md` | Version history and changes |
-| `SCENE_IMAGE_MAPPING.md` | Graphics mapping for each scene |
-| `TAGS_SPECIFICATION.md` | Ink tags system documentation |
-| `TESTING_GUIDE.md` | Testing instructions |
-| `IMAGE_INTEGRATION_SOLUTION.md` | Technical graphics integration guide |
+### Ending Types
+| Ending | Description |
+|--------|-------------|
+| A_best | Best outcome - timely help, minimal harm |
+| A2_assault_reported | Assault occurred but reported |
+| safe_ending_early | Escaped early |
+| D_severe | Worst outcome - severe harm |
 
 ## Development
 
 ### Prerequisites
-- [Inky Editor](https://github.com/inkle/inky/releases) for editing .ink files
+- [Inky Editor](https://github.com/inkle/inky/releases) for .ink files
 - Python 3 for local server
-- Modern web browser for playback
+- Modern web browser
 
-### Making Changes
-1. Edit `普法情景游戏_v1.4_with_tags.ink` in Inky
-2. Compile to JSON using inklecate
-3. Test in browser with local server
+### Compiling Story Changes
+```bash
+/Applications/Inky.app/Contents/Resources/app.asar.unpacked/main-process/ink/inkjs-compatible/inklecate_mac -o story.json 普法情景游戏_v1.4_with_tags.ink
+```
+
+### Cloudflare Worker Setup
+The AI assistant uses a Cloudflare Worker proxy to secure the API key:
+1. Create a Worker at [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. Add `SILICONFLOW_API_KEY` as a secret
+3. Deploy the proxy code (see `ai_api_proxy.js` for reference)
 
 ## License
 
@@ -123,3 +104,4 @@ Educational use only. Content designed for child safety education in Chinese leg
 - Story and game design by the development team
 - Built with [Ink](https://www.inklestudios.com/ink/) by Inkle Studios
 - Web runtime: [inkjs](https://github.com/y-lohse/inkjs)
+- AI powered by [SiliconFlow](https://siliconflow.cn)
