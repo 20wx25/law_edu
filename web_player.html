@@ -588,9 +588,8 @@
             // 副标题
             subtitle: "你的守护精灵",
 
-            // 硅基流动 API
-            apiBase: "https://api.siliconflow.cn/v1",
-            apiKey: "sk-dzzhzvawwfvnxsgvlgqobshghylhptadvszbdqzhcolcynrz",
+            // API Proxy (Cloudflare Worker)
+            apiBase: "https://ai-api-proxy.liyuelin501.workers.dev",
             model: "Qwen/Qwen3.5-397B-A17B",
 
             // 角色系统提示词（修改此处调整助手的说话风格和人格）
@@ -1093,11 +1092,10 @@
             ];
 
             try {
-                const res = await fetch(`${AI_CONFIG.apiBase}/chat/completions`, {
+                const res = await fetch(AI_CONFIG.apiBase, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${AI_CONFIG.apiKey}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         model: AI_CONFIG.model,
